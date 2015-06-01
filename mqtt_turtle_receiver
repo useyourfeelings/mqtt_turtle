@@ -1,0 +1,120 @@
+#! /usr/bin/python3
+# -*- coding: utf-8 -*- 
+# mqtt-turtle
+# python3
+# xc 20150521 raidercodebear@gmail.com
+# a mqtt benchmark tool
+
+import sys
+import time
+import argparse
+import paho.mqtt.client as mqtt
+import json
+import logging
+
+logging.basicConfig(level = logging.DEBUG)
+DBG = logging.debug
+
+total_msgs = 0
+
+HOST = None
+PORT = None
+statistics = {}
+
+def parse_arguments():
+    arguments_parser = argparse.ArgumentParser(description='get mqtt-turtle options', add_help = False)
+    arguments_parser.add_argument('--help', action = "help")
+    arguments_parser.add_argument('-h', metavar = 'xxx.xxx.xxx.xxx', type = str, help = 'host', dest = 'host', required = True)
+    arguments_parser.add_argument('-p', metavar = 'number', type = int, help = 'port', dest = 'port', default = 1883, required = False)
+    
+    args = arguments_parser.parse_args()
+    DBG(args)
+    
+    global HOST
+    global PORT
+    HOST = args.host
+    PORT = args.port
+
+# The callback for when the client receives a CONNACK response from the server.
+def on_connect(client, userdata, rc):
+    DBG("Connected with result code " + str(rc))
+    # Subscribing in on_connect() means that if we lose the connection and
+    # reconnect then subscriptions will be renewed.
+    try:
+        client.subscribe("/mqtt-turtle/test/data/#")
+        client.subscribe("/mqtt-turtle/setting")
+    except:
+        DBG(type(sys.exc_info()[1]))
+        DBG(sys.exc_info()[1])
+
+# The callback for when a PUBLISH message is received from the server.
+def on_message(client, userdata, msg):
+    DBG(msg.topic + " -> " + str(msg.payload))
+    DBG(type(msg.topic))
+
+def on_testdata(client, userdata, msg):
+    DBG(msg.topic + " -> " + str(msg.payload))
+    try:
+        statistics[msg.topic][1] += 1
+    except:
+        DBG(type(sys.exc_info()[1]))
+        DBG(sys.exc_info()[1])
+
+    global total_msgs
+    total_msgs += 1
+    DBG("total_msgs = %d" % total_msgs)
+
+def on_setting(client, userdata, msg):
+    DBG("on_setting")
+    DBG(msg.topic + " -> " + str(msg.payload))
+    DBG(type(msg.payload))
+    setting = json.loads(msg.payload.decode())
+    DBG("setting > topic = %s, task = %d" % (setting['topic'], setting['task']))
+    statistics[setting['topic']] = [setting['task'], 0]
+    
+def show_result():
+    total_task = 0
+    DBG("============ mqtt-turtle result ==========")
+    DBG("|")
+    for i in statistics:
+        total_task += statistics[i][0]
+        DBG("|  topic %s - %d/%d - %.2f%%" % (i, statistics[i][1], statistics[i][0], float(statistics[i][1]) * 100 / float(statistics[i][0])))
+    DBG("|")
+    DBG("========================================")
+    DBG("|")
+    if total_task:
+        DBG("|  total recv/task %d/%d - %.2f%%" % (total_msgs, total_task, float(total_msgs) * 100 / float(total_task)))
+    else:
+        DBG("|  total recv/task %d/%d - %.2f%%" % (total_msgs, total_task, 0))
+    DBG("|")
+    DBG("============ mqtt-turtle over ============")
+    
+def start():
+    client = None
+    try:
+        parse_arguments()
+        
+        client = mqtt.Client(client_id = "mqtt-turtle-receiver")
+        client.on_connect = on_connect
+        client.on_message = on_message
+        
+        client.message_callback_add("/mqtt-turtle/test/data/#", on_testdata)
+        client.message_callback_add("/mqtt-turtle/setting", on_setting)
+
+        client.connect(HOST, port = PORT, keepalive = 100)
+
+        # Blocking call that processes network traffic, dispatches callbacks and
+        # handles reconnecting.
+        # Other loop*() functions are available that give a threaded interface and a
+        # manual interface.
+        client.loop_forever()
+    except:
+        DBG(type(sys.exc_info()[1]))
+        DBG(sys.exc_info()[1])
+        if client:
+            client.disconnect()
+
+    show_result()
+
+if __name__ == '__main__':
+    start()
