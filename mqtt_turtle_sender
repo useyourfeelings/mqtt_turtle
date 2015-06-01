@@ -6,9 +6,10 @@
 # a mqtt benchmark tool
 
 '''
-This program gradually creates mqtt clients.
+The sender will keep creating mqtt clients according to your settings.
 Each client will send a message to the host periodically until they complete the whole task.
 Please provide different ids with -n if you are running multiple instances of this program.
+When all senders finish, give the receiver some ctrl-c to see the result.
 '''
 
 import sys
