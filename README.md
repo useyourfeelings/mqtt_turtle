@@ -57,8 +57,8 @@ sender:
 mqtt_turtle_receiver -h xxx.xxx.xxx.xxx
 
 ####2.make one or more sender
-mqtt_turtle_sender -h xxx.xxx.xxx.xxx -c 6000 -m 60000 -n you -t you -i 7 -P 100 -M it's you
+mqtt_turtle_sender -h xxx.xxx.xxx.xxx -c 6000 -m 60000 -n you -t you -i 7 -P 100 -M you
 
-mqtt_turtle_sender -h xxx.xxx.xxx.xxx -c 6000 -m 60000 -n me -t me -i 7 -P 100 -M it's me
+mqtt_turtle_sender -h xxx.xxx.xxx.xxx -c 6000 -m 60000 -n me -t me -i 7 -P 100 -M me
 
-mqtt_turtle_sender -h xxx.xxx.xxx.xxx -c 6000 -m 60000 -n her -t her -i 7 -P 100 -M it's her
+mqtt_turtle_sender -h xxx.xxx.xxx.xxx -c 6000 -m 60000 -n her -t her -i 7 -P 100 -M her
